@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ToDoList</title>
+    <style>
+        body {margin:0;padding:0;font-size:16px;background: #CDCDCD;}
+        header{
+
+            height: 50px;
+            background-color: #333;
+
+        }
+
+        header>span{
+
+            font-size: 40px;
+            position: relative;
+            left: 500px;
+
+        }
+        header>input{
+
+            width: 300px;
+            height: 30px;
+            position: relative;
+            left: 600px;
+            top: -10px;
+        }
+
+        h2{
+            position: relative;
+            left: 500px;
+
+        }
+        #doneCount,#todoCount{
+            font-size: 20px;
+           color: darkgrey;
+            position: absolute;
+            left: 550px;
+        }
+        ol,ul{
+            position: relative;
+            left: 500px;
+        }
+        footer{
+            font-size: 10px;
+            color: darkgrey;
+            position: relative;
+            left: 700px;
+        }
+        li{
+            width:550px;
+            height:30px;
+            margin-bottom: 10px;
+            background-color: white;
+            position: relative;
+        }
+        li input{
+            width:20px;
+            height:20px;
+            position: relative;
+            left: 0px;
+        }
+        li p{
+            font-size: 20px;
+            position: absolute;
+            left: 50px;
+            top: -20px;
+        }
+        li span{
+            font-size: 30px;
+            position: absolute;
+            top: -5px;
+            left: 500px;
+        }
+
+        footer a{
+            color: darkgrey;
+        }
+
+
+
+
+
+
+
+    </style>
+
+
+</head>
+<body>
+<header class="center">
+    <span>ToDoList</span>
+    <input type="text" placeholder="请输入todolist" id="ipt"/>
+</header>
+
+<main  class="center">
+    <h2>正在进行  <span id="todoCount">0</span> </h2>
+    <ul id="todo">
+        <!--
+        <li>
+        <input type="checkbox">
+        <p>内容</p>
+        <span>-</span>
+        </li>
+        -->
+    </ul>
+    <h2>已经完成  <span id="doneCount">0</span> </h2>
+    <ul id="done">
+        <!--
+        <li>
+        <input type="checkbox" checked>
+        <p>内容</p>
+        <span>-</span>
+        </li>
+        -->
+    </ul>
+</main>
+
+<footer>
+    Copyright @copy 2021 ToDoList 1.0 <a href="javascript:clear();">  clear</a>
+</footer>
+</body>
+
+<script>
+    //获取本地存储数据
+    var todoLs=localStorage.getItem("todoLs");
+    if(todoLs){
+        todoLs=JSON.parse(todoLs);
+        render();
+    }else {
+        todoLs=[];
+    }
+    //添加todo
+    var ipt= document.getElementById("ipt")
+    ipt.onchange=function () {
+
+        todoLs.push({
+            content:this.value,
+            done:false
+        })
+        this.value="";
+        render();
+    }
+
+    //渲染页面
+    function render(){
+        done=document.getElementById("done");
+        done.innerHTML=""
+
+        todo=document.getElementById("todo");
+        todo.innerHTML=""
+        for(var i=0;i<todoLs.length;i++){
+
+
+             if (todoLs[i].done){
+                 //done
+                 doneString=done.innerHTML+'<li draggable="true" ondragstart="dragStart('+i+') " ondragover="dragOver('+i+')"  ondrop="drop('+i+')">\n' +
+                     '        <input  onchange="changeBox('  +i+  ')" type="checkbox" checked >\n' +
+                     '        <p onkeydown="edit('+i+')" contenteditable>'+todoLs[i].content+'</p>\n' +
+                     '        <span onclick="listDel('  +i+  ')">-</span>\n' +
+                     '        </li>';
+                 done.innerHTML=doneString;
+             }else {
+                 //todo2
+                 todoString=todo.innerHTML+'<li draggable="true" ondragstart="dragStart('+i+')"  ondragover="dragOver('+i+')"  ondrop="drop('+i+')">\n' +
+                     '        <input onchange="changeBox('  +i+  ')"  type="checkbox">\n' +
+                     '        <p onkeydown="edit('+i+')" contenteditable>'+todoLs[i].content+'</p>\n' +
+                     '        <span onclick="listDel('  +i+  ')">-</span>\n' +
+                     '        </li>';
+                 todo.innerHTML=todoString;
+
+             }
+        }
+
+        //更改对应list数量
+        todoCount=document.getElementById("todoCount");
+        doneCount=document.getElementById("doneCount");
+        todoCount.innerText=todo.childElementCount
+        doneCount.innerText=done.childElementCount
+
+    }
+    //离开页面事件
+    window.onbeforeunload=function () {
+        //存储数据
+        localStorage.setItem("todoLs",JSON.stringify(todoLs));
+    }
+    //删除todo
+    function listDel(i) {
+        todoLs.splice(i,1);
+        render();
+    }
+    //修改todo
+    function edit(i) {
+        if(this.event.key=="Enter"){
+            this.event.preventDefault();
+            this.blur();
+            todoLs[i].content=this.event.target.innerText;
+            render()
+        }
+    }
+
+    //切换list状态
+    function changeBox(i) {
+        if(todoLs[i].done==true){
+            todoLs[i].done=false;
+        }else {
+            todoLs[i].done=true;
+        }
+        render()
+    }
+    //拖拽交换位置
+    var dragIndex=null;
+    var dragText=null;
+    function dragStart(i) {
+        dragIndex=i;
+        dragText=todoLs[i].content;
+    }
+
+    function dragOver(i) {
+        this.event.preventDefault();
+
+    }
+
+    function drop(i) {
+        todoLs[dragIndex].content=todoLs[i].content;
+        todoLs[i].content=dragText;
+        render()
+    }
+
+    //清空页面内容
+    function clear(){
+        todoLs=[];
+        render();
+    }
+
+</script>
+</html>
